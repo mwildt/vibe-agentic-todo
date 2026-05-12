@@ -3,6 +3,7 @@ package notes
 import (
 	"encoding/json"
 	"net/http"
+	"vibe-agentic/middleware"
 )
 
 type Note struct {
@@ -13,7 +14,8 @@ type Note struct {
 func RegisterHandlers(repo NoteRepository) {
 	service := NewNoteService(repo)
 	
-	http.HandleFunc("/notes", func(w http.ResponseWriter, r *http.Request) {
+	// Create handlers with auth middleware
+	notesHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			var requestBody struct {
 				Text string `json:"text"`
@@ -42,7 +44,7 @@ func RegisterHandlers(repo NoteRepository) {
 	})
 	
 	// Handle GET /notes/{id}
-	http.HandleFunc("/notes/", func(w http.ResponseWriter, r *http.Request) {
+	notesIDHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.NotFound(w, r)
 			return
@@ -69,4 +71,8 @@ func RegisterHandlers(repo NoteRepository) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(note)
 	})
+	
+	// Register handlers with auth middleware
+	http.Handle("/notes", middleware.AuthMiddleware(notesHandler))
+	http.Handle("/notes/", middleware.AuthMiddleware(notesIDHandler))
 }

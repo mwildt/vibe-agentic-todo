@@ -9,3 +9,4 @@ Als User möchte ich die Möglichkeit haben, eine neue Notiz zu erstellen und di
 - Der User kann die Notiz speichern.
 - Nach dem Speichern wird eine Bestätigung angezeigt, dass die Notiz erfolgreich gespeichert wurde.
 - Die gespeicherte Notiz kann später wieder abgerufen werden.
+- Es wird eine gültige Session inkl. der passenden Berechtigungen benötigt.
