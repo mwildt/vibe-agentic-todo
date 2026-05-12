@@ -1,8 +1,12 @@
 package auth
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
+
+	"encoding/json"
+	"gopkg.in/yaml.v2"
 )
 
 var sessionStore SessionStore
@@ -51,9 +55,39 @@ func RegisterHandlers(store SessionStore) {
 	})
 }
 
-// isValidUser validates user credentials (simple implementation for now)
+// isValidUser validates user credentials against YAML file
 func isValidUser(username, password string) bool {
-	// Simple validation: username and password should not be empty
-	// In a real application, this would check against a user store
-	return username != "" && password != "" && username == "testuser" && password == "testpass"
+	// First check if it's the default test user
+	if username == "testuser" && password == "testpass" {
+		return true
+	}
+	
+	// Check against YAML file
+	data, err := os.ReadFile("users.yaml")
+	if err != nil {
+		// If file doesn't exist, only allow testuser
+		return username == "testuser" && password == "testpass"
+	}
+	
+	var config struct {
+		Users []struct {
+			Username     string `yaml:"username"`
+			PasswordHash string `yaml:"password_hash"`
+		} `yaml:"users"`
+	}
+	
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return false
+	}
+	
+	// Find user and check password
+	for _, user := range config.Users {
+		if user.Username == username {
+			// Check if password matches the hash
+			expectedHash := fmt.Sprintf("hashed_%s", password)
+			return user.PasswordHash == expectedHash
+		}
+	}
+	
+	return false
 }

@@ -56,6 +56,27 @@ Es werden Module zu Sub-Domains erstellt. Zu jedem Sub-Modul gelten die folgende
 * Rest-Controller werden in der Datei rest.go implementiert.
 * Repositories werden in der Datei repository.go als Interface definiert. Die Implementierung der Interfaces erfolgt in der Datei <type>_repository, wobei typ den Typ des Repos beschreibt.
 * Komplexere Logik erfolgt in der Datei service.go. Dazu wird immer ein Strukt angelegt.
+* CLI-Commands werden im Verzeichnis cmd/cli implementiert und folgen dem Cobra-Framework-Pattern.
+
+## CLI-Struktur
+Administrative Funktionen werden als CLI-Commands implementiert:
+* Command-Dateien folgen dem Muster: cmd/cli/cmd/<command>.go
+* Jeder Command hat eine klare Hilfe-Dokumentation
+* Commands geben strukturierte Ausgaben (JSON oder Text) zurück
+* Fehler werden mit angemessenen Exit-Codes und Fehlermeldungen behandelt
+
+### Best Practices für CLI-Commands:
+- ✅ Verwende Cobra oder ein ähnliches Framework für CLI-Struktur
+- ✅ Implementiere Hilfe-Flags (--help)
+- ✅ Gib klare Erfolgs- und Fehlermeldungen aus
+- ✅ Verwende angemessene Exit-Codes (0 für Erfolg, !=0 für Fehler)
+- ✅ Unterstütze sowohl JSON- als auch Text-Ausgabe
+
+### Anti-Patterns für CLI:
+- ❌ Direkte Business-Logik in CLI-Dateien
+- ❌ Keine Fehlerbehandlung in Commands
+- ❌ Unklare oder fehlende Dokumentation
+- ❌ Inkonsistente Ausgabeformate
 
 ## Checkliste für neue Endpunkte
 1. [ ] Autorisierungs-Middleware implementieren/einbinden

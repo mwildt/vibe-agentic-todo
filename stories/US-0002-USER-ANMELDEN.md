@@ -6,7 +6,6 @@ Als Nutzer möchte ich die Möglichkeit haben, mich mit meinen Anmeldedaten (Ben
 ## Akzeptanzkriterien
 - Der Nutzer kann sich mit Benutzername und Passwort anmelden
 - Bei erfolgreicher Anmeldung wird eine gültige Session-ID zurückgegeben
-- Die Session-ID muss mindestens 40 Zeichen lang sein und zufäälig erzeugt werden(gemäß Architektur-Dokumentation)
 - Bei falschen Anmeldedaten wird ein entsprechender Fehler zurückgegeben
 - Die Session-ID kann in subsequenten Requests im X-Session-ID Header verwendet werden
 - Die Anmeldung erfolgt über einen REST-Endpunkt /login mit POST-Methode

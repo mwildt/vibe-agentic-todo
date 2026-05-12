@@ -1,11 +1,12 @@
 package tests
 
 import (
-	"testing"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"os"
+	"strings"
+	"testing"
 )
 
 // TestRetrieveNote tests that a saved note can be retrieved later
@@ -32,23 +33,18 @@ func TestRetrieveNote(t *testing.T) {
 		t.Fatalf("Login failed: got status %v", loginRR.Code)
 	}
 	
-	// Extract session ID from login response using proper JSON parsing
-	// The response format is: {"session_id":"<64-char-hex-string>"}
-	// We need to find the value between the quotes after "session_id:"
-	
-	loginResponse := loginRR.Body.String()
-	sessionStart := strings.Index(loginResponse, `"session_id":"`) + 13
-	if sessionStart < 13 {
-		t.Fatal("Login response does not contain session_id")
+	// Parse login response using proper JSON unmarshaling
+	var loginResp LoginResponse
+	if err := json.NewDecoder(loginRR.Body).Decode(&loginResp); err != nil {
+		t.Fatalf("Failed to parse login response: %v", err)
 	}
 	
-	// The session ID is 64 characters long (32 bytes in hex)
-	// Extract the next 64 hex characters (which should be the session ID)
-	// But we need to skip the opening quote
-	sessionID := loginResponse[sessionStart+1 : sessionStart+65]
+	sessionID := loginResp.SessionID
 	
-	// Debug output
-	t.Logf("Extracted session ID: %s (length: %d)", sessionID, len(sessionID))
+	// Verify session ID length
+	if len(sessionID) != 64 {
+		t.Errorf("Session ID has wrong length: got %d, want 64", len(sessionID))
+	}
 
 	// First, create a note to retrieve
 	createReq, err := http.NewRequest("POST", "/notes", strings.NewReader(`{"text": "Test note to retrieve"}`))
