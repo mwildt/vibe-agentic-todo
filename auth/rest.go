@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"net/http"
 
 	"encoding/json"
@@ -10,12 +9,12 @@ import (
 
 var (
 	sessionStore SessionStore
-	userRepo      user.UserRepository
+	userRepo     user.UserRepository
 )
 
 type LoginRequest struct {
 	Username string `json:"username"`
-	Password  string `json:"password"`
+	Password string `json:"password"`
 }
 
 type LoginResponse struct {
@@ -25,32 +24,32 @@ type LoginResponse struct {
 func RegisterHandlers(store SessionStore, userRepository user.UserRepository) {
 	sessionStore = store
 	userRepo = userRepository
-	
+
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.NotFound(w, r)
 			return
 		}
-		
+
 		var req LoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		
+
 		// Validate credentials (simple validation for now)
 		if !isValidUser(req.Username, req.Password) {
 			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 			return
 		}
-		
+
 		// Create session in store
 		session, err := sessionStore.CreateSession(req.Username)
 		if err != nil {
 			http.Error(w, "Failed to create session", http.StatusInternalServerError)
 			return
 		}
-		
+
 		// Return session ID
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -60,22 +59,17 @@ func RegisterHandlers(store SessionStore, userRepository user.UserRepository) {
 
 // isValidUser validates user credentials using the user repository
 func isValidUser(username, password string) bool {
-	// First check if it's the default test user
-	if username == "testuser" && password == "testpass" {
-		return true
-	}
-	
+
 	// Check against user repository
 	if userRepo == nil {
 		return false
 	}
-	
+
 	storedUser, found := userRepo.GetUser(username)
 	if !found {
 		return false
 	}
-	
-	// Check if password matches the hash
-	expectedHash := fmt.Sprintf("hashed_%s", password)
-	return storedUser.PasswordHash == expectedHash
+
+	// Check if password matches the bcrypt hash
+	return user.VerifyPassword(storedUser.PasswordHash, password)
 }
