@@ -5,14 +5,8 @@ import (
 	"os"
 	"sync"
 
-	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v2"
 )
-
-type User struct {
-	Username     string `yaml:"username"`
-	PasswordHash string `yaml:"password_hash"`
-}
 
 type UserRepository interface {
 	CreateUser(username, password string) error
@@ -86,16 +80,13 @@ func (r *YAMLUserRepository) CreateUser(username, password string) error {
 		}
 	}
 
-	// Add new user
-	hashedPassword, err := hashPassword(password)
+	// Create new user using domain constructor
+	newUser, err := NewUser(username, password)
 	if err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 
-	r.users = append(r.users, User{
-		Username:     username,
-		PasswordHash: hashedPassword,
-	})
+	r.users = append(r.users, *newUser)
 
 	return r.saveUsers()
 }
@@ -105,15 +96,14 @@ func (r *YAMLUserRepository) UpdateUser(username, password string) error {
 	defer r.mu.Unlock()
 
 	// Find and update the user
-	hashedPassword, err := hashPassword(password)
-	if err != nil {
-		return fmt.Errorf("failed to update user: %w", err)
-	}
-
 	found := false
 	for i, user := range r.users {
 		if user.Username == username {
-			r.users[i].PasswordHash = hashedPassword
+			// Use the user's SetPassword method for proper hashing
+			err := r.users[i].SetPassword(password)
+			if err != nil {
+				return fmt.Errorf("failed to update user: %w", err)
+			}
 			found = true
 			break
 		}
@@ -162,17 +152,4 @@ func (r *YAMLUserRepository) GetUser(username string) (User, bool) {
 	return User{}, false
 }
 
-func hashPassword(password string) (string, error) {
-	// Use bcrypt for secure password hashing
-	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", fmt.Errorf("failed to hash password: %w", err)
-	}
-	return string(hashedBytes), nil
-}
 
-func VerifyPassword(hashedPassword, password string) bool {
-	// Verify password against bcrypt hash
-	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-	return err == nil
-}

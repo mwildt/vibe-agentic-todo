@@ -47,6 +47,26 @@ middleware.SetSessionStore(sessionStore)
 // auth.RegisterHandlers() // Ohne Session-Store
 ```
 
+## Domain Layer
+Die Domain-Schicht enthält die Business-Objekte und ihre Kernlogik. Jedes Domain-Objekt sollte seine eigene Business-Logik kapseln.
+
+### User Domain Objekt
+Das User-Objekt in `auth/user/domain.go` enthält:
+- Passwort-Hashing (`HashPassword()`)
+- Passwort-Verifikation (`VerifyPassword()`)
+- Passwort-Änderung (`SetPassword()`)
+
+### Best Practices für Domain-Objekte:
+- ✅ Domain-Objekte sollten ihre eigene Validierungslogik enthalten
+- ✅ Business-Regeln sollten in Domain-Methoden gekapselt sein
+- ✅ Domain-Objekte sollten unabhänig von Storage- oder UI-Logik sein
+- ✅ Nutze Konstruktoren für komplexe Objekt-Erstellung
+
+### Anti-Patterns für Domain-Objekte:
+- ❌ Domain-Logik in Repositories oder Services auslagern
+- ❌ Domain-Objekte mit Storage-Abhängigkeiten
+- ❌ Business-Regeln in UI- oder CLI-Schicht implementieren
+
 ## Storage
 Die Speicherung findet über einzelne JSON-Dateien statt. Dabei gilt immer: Jede Datei hat eine generische ID und liegt im Verzeichnis zu seiner Entität.
 Beispiel: lists/alsdkjsfhakdsnjva.json
@@ -54,6 +74,7 @@ Beispiel: lists/alsdkjsfhakdsnjva.json
 ## Struktur
 Es werden Module zu Sub-Domains erstellt. Zu jedem Sub-Modul gelten die folgenden Regeln:
 * Rest-Controller werden in der Datei rest.go implementiert.
+* Domain-Objekte mit Business-Logik werden in domain.go definiert.
 * Repositories werden in der Datei repository.go als Interface definiert. Die Implementierung der Interfaces erfolgt in der Datei <type>_repository, wobei typ den Typ des Repos beschreibt.
 * Komplexere Logik erfolgt in der Datei service.go. Dazu wird immer ein Strukt angelegt.
 * CLI-Commands werden im Verzeichnis cmd/cli implementiert und folgen dem Cobra-Framework-Pattern.
@@ -71,12 +92,14 @@ Administrative Funktionen werden als CLI-Commands implementiert:
 - ✅ Gib klare Erfolgs- und Fehlermeldungen aus
 - ✅ Verwende angemessene Exit-Codes (0 für Erfolg, !=0 für Fehler)
 - ✅ Unterstütze sowohl JSON- als auch Text-Ausgabe
+- ✅ Nutze Domain-Objekte für Business-Logik (z.B. User.HashPassword())
 
 ### Anti-Patterns für CLI:
 - ❌ Direkte Business-Logik in CLI-Dateien
 - ❌ Keine Fehlerbehandlung in Commands
 - ❌ Unklare oder fehlende Dokumentation
 - ❌ Inkonsistente Ausgabeformate
+- ❌ Manuelle Implementierung von Domain-Logik (z.B. Passwort-Hashing in CLI)
 
 ## Checkliste für neue Endpunkte
 1. [ ] Autorisierungs-Middleware implementieren/einbinden

@@ -70,6 +70,6 @@ func isValidUser(username, password string) bool {
 		return false
 	}
 
-	// Check if password matches the bcrypt hash
-	return user.VerifyPassword(storedUser.PasswordHash, password)
+	// Check if password matches using the user's VerifyPassword method
+	return storedUser.VerifyPassword(password)
 }
