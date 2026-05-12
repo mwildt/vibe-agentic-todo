@@ -3,13 +3,15 @@ package auth
 import (
 	"fmt"
 	"net/http"
-	"os"
 
 	"encoding/json"
-	"gopkg.in/yaml.v2"
+	"vibe-agentic/auth/user"
 )
 
-var sessionStore SessionStore
+var (
+	sessionStore SessionStore
+	userRepo      user.UserRepository
+)
 
 type LoginRequest struct {
 	Username string `json:"username"`
@@ -20,8 +22,9 @@ type LoginResponse struct {
 	SessionID string `json:"session_id"`
 }
 
-func RegisterHandlers(store SessionStore) {
+func RegisterHandlers(store SessionStore, userRepository user.UserRepository) {
 	sessionStore = store
+	userRepo = userRepository
 	
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -55,39 +58,24 @@ func RegisterHandlers(store SessionStore) {
 	})
 }
 
-// isValidUser validates user credentials against YAML file
+// isValidUser validates user credentials using the user repository
 func isValidUser(username, password string) bool {
 	// First check if it's the default test user
 	if username == "testuser" && password == "testpass" {
 		return true
 	}
 	
-	// Check against YAML file
-	data, err := os.ReadFile("users.yaml")
-	if err != nil {
-		// If file doesn't exist, only allow testuser
-		return username == "testuser" && password == "testpass"
-	}
-	
-	var config struct {
-		Users []struct {
-			Username     string `yaml:"username"`
-			PasswordHash string `yaml:"password_hash"`
-		} `yaml:"users"`
-	}
-	
-	if err := yaml.Unmarshal(data, &config); err != nil {
+	// Check against user repository
+	if userRepo == nil {
 		return false
 	}
 	
-	// Find user and check password
-	for _, user := range config.Users {
-		if user.Username == username {
-			// Check if password matches the hash
-			expectedHash := fmt.Sprintf("hashed_%s", password)
-			return user.PasswordHash == expectedHash
-		}
+	storedUser, found := userRepo.GetUser(username)
+	if !found {
+		return false
 	}
 	
-	return false
+	// Check if password matches the hash
+	expectedHash := fmt.Sprintf("hashed_%s", password)
+	return storedUser.PasswordHash == expectedHash
 }

@@ -3,6 +3,7 @@ package tests
 import (
 	"sync"
 	"vibe-agentic/auth"
+	"vibe-agentic/auth/user"
 	"vibe-agentic/middleware"
 	"vibe-agentic/notes"
 )
@@ -10,12 +11,16 @@ import (
 var (
 	setupOnce sync.Once
 	sessionStore = auth.NewInMemorySessionStore()
+	userRepo      = user.NewYAMLUserRepository("users.yaml")
 )
 
 func setupTest() {
 	setupOnce.Do(func() {
-		// Register auth handlers with session store
-		auth.RegisterHandlers(sessionStore)
+		// Load users
+		userRepo.LoadUsers()
+		
+		// Register auth handlers with session store and user repository
+		auth.RegisterHandlers(sessionStore, userRepo)
 		
 		// Configure middleware with session store
 		middleware.SetSessionStore(sessionStore)
