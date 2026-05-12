@@ -128,9 +128,3 @@ func NewUserDeleteCommand() *cobra.Command {
 
 	return userDeleteCmd
 }
-
-func hashPassword(password string) string {
-	// Simple hash function for testing
-	// In production, use bcrypt or similar
-	return fmt.Sprintf("hashed_%s", password)
-}

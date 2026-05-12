@@ -1,5 +1,3 @@
 users:
-- username: updateuser
-  password_hash: hashed_newpassword456
-- username: deleteuser
-  password_hash: $2a$10$a69VpiL34vGKh/9s5abkAuKxqIPlFnHa5su727hOS7jAkemwNRU3i
+- username: testdeleteuser
+  password_hash: $2a$10$zYD3fL8s/1R/K5gpWaEXXe4.p2l7FMlumc.ysxKdD2pIBBrn9JbsW

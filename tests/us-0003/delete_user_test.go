@@ -17,11 +17,12 @@ func TestDeleteUserCLI(t *testing.T) {
 	// Cleanup
 	defer func() {
 		// Clean up the YAML file
-		os.Remove("users.yaml")
+		os.Remove("test_delete_users.yaml")
 	}()
 
 	// First, create a user (use a different username than the default testuser)
-	createCmd := exec.Command("go", "run", "vibe-agentic/cmd/cli", "user", "add", "--username", "deleteuser", "--password", "deletepassword", "--file", "users.yaml")
+	// Use a unique file name to avoid conflicts with other tests
+	createCmd := exec.Command("go", "run", "vibe-agentic/cmd/cli", "user", "add", "--username", "testdeleteuser", "--password", "deletepassword", "--file", "test_delete_users.yaml")
 	createCmd.Env = append(os.Environ(), "GO111MODULE=on")
 	createCmd.Dir = ".."
 	var stdout, stderr bytes.Buffer
@@ -48,7 +49,7 @@ func TestDeleteUserCLI(t *testing.T) {
 	}
 	
 	// Now delete the user
-	deleteCmd := exec.Command("go", "run", "vibe-agentic/cmd/cli", "user", "delete", "--username", "deleteuser", "--file", "users.yaml")
+	deleteCmd := exec.Command("go", "run", "vibe-agentic/cmd/cli", "user", "delete", "--username", "testdeleteuser", "--file", "test_delete_users.yaml")
 	deleteCmd.Env = append(os.Environ(), "GO111MODULE=on")
 	deleteCmd.Dir = ".."
 	var deleteStdout, deleteStderr bytes.Buffer
@@ -60,13 +61,13 @@ func TestDeleteUserCLI(t *testing.T) {
 	}
 	
 	// Check the output
-	expectedSuccess := "User 'deleteuser' deleted successfully"
+	expectedSuccess := "User 'testdeleteuser' deleted successfully"
 	if !bytes.Contains(deleteStdout.Bytes(), []byte(expectedSuccess)) {
 		t.Errorf("user delete command output does not contain success message: got %s", deleteStdout.String())
 	}
 	
 	// Verify that the user can no longer login after deletion
-	loginReq2, err := http.NewRequest("POST", "/login", bytes.NewReader([]byte(`{"username": "deleteuser", "password": "deletepassword"}`)))
+	loginReq2, err := http.NewRequest("POST", "/login", bytes.NewReader([]byte(`{"username": "testdeleteuser", "password": "deletepassword"}`)))
 	if err != nil {
 		t.Fatal(err)
 	}

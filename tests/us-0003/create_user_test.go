@@ -17,18 +17,18 @@ func TestCreateUserCLI(t *testing.T) {
 	// Cleanup
 	defer func() {
 		// Clean up the test user using the repository directly
-		userRepo.DeleteUser("testuser")
+		userRepo.DeleteUser("testcreateuser")
 	}()
 
 	// Create user directly using the repository to avoid CLI file path issues
-	if err := userRepo.CreateUser("testuser", "testpassword123"); err != nil {
+	if err := userRepo.CreateUser("testcreateuser", "testpassword123"); err != nil {
 		t.Logf("user creation failed (expected if user already exists): %v", err)
 	}
 
 	// User creation was successful (using repository directly instead of CLI)
 
 	// Verify that the user can now login with the created credentials via REST endpoint
-	loginReq, err := http.NewRequest("POST", "/login", bytes.NewReader([]byte(`{"username": "testuser", "password": "testpassword123"}`)))
+	loginReq, err := http.NewRequest("POST", "/login", bytes.NewReader([]byte(`{"username": "testcreateuser", "password": "testpassword123"}`)))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -18,6 +18,11 @@ func setupTest() {
 		// Load users
 		userRepo.LoadUsers()
 		
+		// Create testuser if it doesn't exist
+		if _, exists := userRepo.GetUser("testuser"); !exists {
+			userRepo.CreateUser("testuser", "testpass")
+		}
+		
 		// Register auth handlers with session store and user repository
 		auth.RegisterHandlers(sessionStore, userRepo)
 		

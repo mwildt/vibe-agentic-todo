@@ -1,1 +1,3 @@
-users: []
+users:
+- username: testuser
+  password_hash: $2a$10$Y3C..QRygx9pR4NagfRhveZTNG90oselgMkKb3Ykriksmm2f25o1W
