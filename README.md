@@ -5,7 +5,7 @@ A modern TODO list management system with REST API and CLI administration.
 ## Features
 
 ### REST API
-- **Session-based authentication** with JWT-like session tokens
+- **Session-based authentication** with cryptographically secure session IDs
 - **TODO list management** (create, retrieve, update, delete)
 - **User management** (create, update, delete)
 - **Middleware-based authorization** for all endpoints
@@ -83,7 +83,7 @@ Content-Type: application/json
 
 Response:
 {
-  "session_id": "64-character-hex-string"
+  "session_id": "64-character-hex-encoded-32-byte-random-value"
 }
 ```
 
@@ -169,7 +169,8 @@ docs/
 
 ### API Layer
 - **RESTful endpoints** following standard conventions
-- **Session-based authentication** with 24-hour expiration
+- **Session-based authentication** with cryptographically secure 32-byte session IDs
+- **24-hour session expiration** for security
 - **Middleware-based authorization** for all protected routes
 
 ### CLI Layer
@@ -200,9 +201,11 @@ cd tests && go test ./us-0001 -v
 ## Security
 
 - **Bcrypt password hashing** with default cost factor
+- **Cryptographically secure session IDs** (32-byte random values)
 - **Session timeout** (24 hours)
-- **CSRF protection** via session tokens
+- **CSRF protection** via required session headers
 - **Input validation** on all endpoints
+- **Thread-safe session management** with mutex protection
 
 ## Contributing
 
