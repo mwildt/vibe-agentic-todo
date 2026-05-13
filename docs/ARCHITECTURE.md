@@ -1,151 +1,123 @@
-# Architekturhinweise
+# Architecture Overview
 
-## generell
-Es handelt sich um ein Projekt in der Sprache golang.
+## General
+This is a Go language project.
 
-## Steuerung
-Es handelt sich um ein Projekt, welches nur über eine Rest-API verfügen soll. 
+## Control
+The project consists of a REST API and a CLI for administrative actions.
 
-## Berechtigung ⚠️ WICHTIG
-Jeder API-Request muss über eine Session-ID autorisiert werden. Die Autorisierung muss folgende Anforderungen erfüllen:
+## Module Structure
+The system is organized into subdomains. Each subdomain module follows these rules:
 
-1. **Session-ID Pflicht**: Jeder Request muss eine gültige Session-ID im Header enthalten
-2. **Endpunkt-spezifische Berechtigungen**: Jeder Endpunkt erfordert eine eigene HTTP_* Berechtigung
-3. **Middleware-basiert**: Die Autorisierung muss als Middleware implementiert werden, die vor den eigentlichen Handlern ausgeführt wird
-4. **Fehlerbehandlung**: Nicht autorisierte Requests müssen mit 401 Unauthorized antworten
-5. **Session-Speicherung**: Sessions müssen in einem Session-Store gespeichert und validiert werden
+### Layers within each Module:
+1. **Domain Layer**: Contains business objects and core logic
+2. **Storage Layer**: Handles data persistence
+3. **Service Layer**: Contains complex business logic
+4. **Controller Layer**: REST handlers and CLI commands
 
-### Implementierungsvorgaben:
-- Middleware-Datei: `middleware/auth.go`
-- Session-Verwaltung: `auth/session.go`
-- Session-Store Interface: `auth.SessionStore`
-- In-Memory Implementierung: `auth.InMemorySessionStore`
-- Berechtigungsprüfung muss vor jedem Handler aufgerufen werden
-- Session-Store muss vor der Handler-Registrierung konfiguriert werden
+### Ports and Adapters Pattern
+Each module follows a ports and adapters architecture:
+- Domain layer defines interfaces (ports)
+- Infrastructure implements interfaces (adapters)
+- Dependencies point inward toward the domain
+
+### File Organization per Module:
+- `rest.go` - REST controllers
+- `domain.go` - Domain objects with business logic
+- `repository.go` - Repository interfaces
+- `<type>_repository.go` - Repository implementations
+- `service.go` - Complex business logic services
+- `cmd/cli/cmd/<command>.go` - CLI commands
+
+## Authorization ⚠️ IMPORTANT
+Every API request must be authorized with a Session-ID. Authorization must meet these requirements:
+
+1. **Session-ID Required**: Every request must contain a valid Session-ID in the header
+2. **Endpoint-specific Permissions**: Each endpoint requires specific HTTP permissions
+3. **Middleware-based**: Authorization must be implemented as middleware executed before handlers
+4. **Error Handling**: Unauthorized requests must return 401 Unauthorized
+5. **Session Storage**: Sessions must be stored and validated in a Session-Store
+
+### Implementation Guidelines:
+- Middleware file: `middleware/auth.go`
+- Session management: `auth/session.go`
+- Session-Store interface: `auth.SessionStore`
+- In-Memory implementation: `auth.InMemorySessionStore`
+- Permission check must be called before each handler
+- Session-Store must be configured before handler registration
 
 ### Best Practices:
-- ✅ Session-Store als Dependency injizieren
-- ✅ Thread-sichere Implementierung verwenden (Mutex)
-- ✅ Session-Timeout implementieren (z.B. 24 Stunden)
-- ✅ Session-IDs mit UUID oder ähnlichem generieren
-- ✅ Session-Validierung gegen den Store durchführen
+- ✅ Inject Session-Store as dependency
+- ✅ Use thread-safe implementation (Mutex)
+- ✅ Implement session timeout (e.g., 24 hours)
+- ✅ Generate session IDs with UUID or similar
+- ✅ Validate sessions against the store
 
 ### Anti-Patterns:
-- ❌ Sessions manuell verwalten
-- ❌ Session-IDs ohne Store validieren
-- ❌ Session-Store global ohne Dependency Injection verwenden
-- ❌ Thread-Sicherheit ignorieren
+- ❌ Manual session management
+- ❌ Validate session IDs without store
+- ❌ Use Session-Store globally without dependency injection
+- ❌ Ignore thread safety
 
-### Beispiel:
+### Example:
 ```go
-// Richtige Implementierung
+// Correct implementation
 sessionStore := auth.NewInMemorySessionStore()
 auth.RegisterHandlers(sessionStore)
 middleware.SetSessionStore(sessionStore)
 
-// Falsche Implementierung (Anti-Pattern)
-// auth.RegisterHandlers() // Ohne Session-Store
+// Anti-Pattern (wrong implementation)
+// auth.RegisterHandlers() // Without Session-Store
 ```
-
-## Test Implementation Guidelines
-
-### JSON Handling in Tests
-
-✅ **DO:**
-- Use `json.NewDecoder()` to parse responses into structs
-- Use `json.Marshal()` to create request bodies
-- Define proper Go structs with JSON tags for request/response formats
-- Compare struct fields directly (e.g., `if response.Text != expectedText`)
-
-❌ **DON'T:**
-- Use `strings.Contains()` or other string operations to check JSON content
-- Manually parse JSON strings with `strings.Index()` or regex
-- Compare raw JSON strings
-
-### Example of Correct Pattern:
-
-```go
-// Define response struct
-type NoteResponse struct {
-    ID   string `json:"id"`
-    Text string `json:"text"`
-}
-
-// Parse response properly
-var note NoteResponse
-if err := json.NewDecoder(response.Body).Decode(&note); err != nil {
-    t.Fatalf("Failed to parse response: %v", err)
-}
-
-// Compare fields directly
-if note.Text != expectedText {
-    t.Errorf("Expected text %q, got %q", expectedText, note.Text)
-}
-```
-
-### Legacy Code Note:
-Some older tests may use string operations for convenience. These should be migrated to proper JSON parsing when modified.
 
 ## Domain Layer
-Die Domain-Schicht enthält die Business-Objekte und ihre Kernlogik. Jedes Domain-Objekt sollte seine eigene Business-Logik kapseln.
+The Domain layer contains business objects and their core logic. Each domain object should encapsulate its own business logic.
 
-### User Domain Objekt
-Das User-Objekt in `auth/user/domain.go` enthält:
-- Passwort-Hashing (`HashPassword()`)
-- Passwort-Verifikation (`VerifyPassword()`)
-- Passwort-Änderung (`SetPassword()`)
+### User Domain Object
+The User object in `auth/user/domain.go` contains:
+- Password hashing (`HashPassword()`)
+- Password verification (`VerifyPassword()`)
+- Password change (`SetPassword()`)
 
-### Best Practices für Domain-Objekte:
-- ✅ Domain-Objekte sollten ihre eigene Validierungslogik enthalten
-- ✅ Business-Regeln sollten in Domain-Methoden gekapselt sein
-- ✅ Domain-Objekte sollten unabhänig von Storage- oder UI-Logik sein
-- ✅ Nutze Konstruktoren für komplexe Objekt-Erstellung
+### Best Practices for Domain Objects:
+- ✅ Domain objects should contain their own validation logic
+- ✅ Business rules should be encapsulated in domain methods
+- ✅ Domain objects should be independent of storage or UI concerns
+- ✅ Use constructors for complex object creation
 
-### Anti-Patterns für Domain-Objekte:
-- ❌ Domain-Logik in Repositories oder Services auslagern
-- ❌ Domain-Objekte mit Storage-Abhängigkeiten
-- ❌ Business-Regeln in UI- oder CLI-Schicht implementieren
+### Anti-Patterns for Domain Objects:
+- ❌ Move domain logic to repositories or services
+- ❌ Create domain objects with storage dependencies
+- ❌ Implement business rules in UI or CLI layer
 
-## Storage
-Die Speicherung findet über einzelne JSON-Dateien statt. Dabei gilt immer: Jede Datei hat eine generische ID und liegt im Verzeichnis zu seiner Entität.
-Beispiel: lists/alsdkjsfhakdsnjva.json
+## Storage Layer
+Storage uses individual JSON files. Each file has a generic ID and is located in its entity's directory.
+Example: `lists/alsdkjsfhakdsnjva.json`
 
-## Struktur
-Es werden Module zu Sub-Domains erstellt. Zu jedem Sub-Modul gelten die folgenden Regeln:
-* Rest-Controller werden in der Datei rest.go implementiert.
-* Domain-Objekte mit Business-Logik werden in domain.go definiert.
-* Repositories werden in der Datei repository.go als Interface definiert. Die Implementierung der Interfaces erfolgt in der Datei <type>_repository, wobei typ den Typ des Repos beschreibt.
-* Komplexere Logik erfolgt in der Datei service.go. Dazu wird immer ein Strukt angelegt.
-* CLI-Commands werden im Verzeichnis cmd/cli implementiert und folgen dem Cobra-Framework-Pattern.
+## CLI Structure
+Administrative functions are implemented as CLI commands:
+- Command files follow the pattern: `cmd/cli/cmd/<command>.go`
+- Each command has clear help documentation
+- Commands return structured output (JSON or text)
+- Errors are handled with appropriate exit codes and messages
 
-## CLI-Struktur
-Administrative Funktionen werden als CLI-Commands implementiert:
-* Command-Dateien folgen dem Muster: cmd/cli/cmd/<command>.go
-* Jeder Command hat eine klare Hilfe-Dokumentation
-* Commands geben strukturierte Ausgaben (JSON oder Text) zurück
-* Fehler werden mit angemessenen Exit-Codes und Fehlermeldungen behandelt
+### Best Practices for CLI Commands:
+- ✅ Use Cobra or similar framework for CLI structure
+- ✅ Implement help flags (--help)
+- ✅ Provide clear success and error messages
+- ✅ Use appropriate exit codes (0 for success, !=0 for errors)
+- ✅ Support both JSON and text output
+- ✅ Use domain objects for business logic (e.g., User.HashPassword())
 
-### Best Practices für CLI-Commands:
-- ✅ Verwende Cobra oder ein ähnliches Framework für CLI-Struktur
-- ✅ Implementiere Hilfe-Flags (--help)
-- ✅ Gib klare Erfolgs- und Fehlermeldungen aus
-- ✅ Verwende angemessene Exit-Codes (0 für Erfolg, !=0 für Fehler)
-- ✅ Unterstütze sowohl JSON- als auch Text-Ausgabe
-- ✅ Nutze Domain-Objekte für Business-Logik (z.B. User.HashPassword())
+### Anti-Patterns for CLI:
+- ❌ Direct business logic in CLI files
+- ❌ No error handling in commands
+- ❌ Unclear or missing documentation
+- ❌ Inconsistent output formats
+- ❌ Manual implementation of domain logic (e.g., password hashing in CLI)
 
-### Anti-Patterns für CLI:
-- ❌ Direkte Business-Logik in CLI-Dateien
-- ❌ Keine Fehlerbehandlung in Commands
-- ❌ Unklare oder fehlende Dokumentation
-- ❌ Inkonsistente Ausgabeformate
-- ❌ Manuelle Implementierung von Domain-Logik (z.B. Passwort-Hashing in CLI)
-
-## Checkliste für neue Endpunkte
-1. [ ] Autorisierungs-Middleware implementieren/einbinden
-2. [ ] Session-ID Validierung implementieren
-3. [ ] Endpunkt-spezifische Berechtigung prüfen
-4. [ ] Fehlerfälle (401, 403) korrekt behandeln
-
-
-
-
+## Checklist for New Endpoints
+1. [ ] Implement/integrate authorization middleware
+2. [ ] Implement session-ID validation
+3. [ ] Check endpoint-specific permissions
+4. [ ] Handle error cases (401, 403) correctly
