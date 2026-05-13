@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"vibe-agentic/middleware"
-	"github.com/microcosm-cc/bluemonday"
 )
 
 type Note struct {
@@ -38,18 +37,14 @@ func RegisterHandlers(repo NoteRepository) {
 				return
 			}
 
-			// Sanitize input to prevent XSS
-			p := bluemonday.UGCPolicy()
-			sanitizedText := p.Sanitize(requestBody.Text)
-			
 			// Validate text length
 			const MaxNoteTextLength = 10000
-			if len(sanitizedText) > MaxNoteTextLength {
+			if len(requestBody.Text) > MaxNoteTextLength {
 				http.Error(w, "Note text too long", http.StatusBadRequest)
 				return
 			}
 			
-			note, err := service.CreateNote(sanitizedText)
+			note, err := service.CreateNote(requestBody.Text)
 			if err != nil {
 				middleware.SanitizeError(w, err, http.StatusInternalServerError)
 				return

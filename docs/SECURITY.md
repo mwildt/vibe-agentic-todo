@@ -36,20 +36,7 @@ if err := validator.Struct(req); err != nil {
 }
 ```
 
-#### 2. Input Sanitization
 
-```go
-// GOOD: Sanitize input to prevent XSS
-import "github.com/microcosm-cc/bluemonday"
-
-func sanitizeInput(input string) string {
-    p := bluemonday.UGCPolicy()
-    return p.Sanitize(input)
-}
-
-// Use for all text that will be displayed
-note.Text = sanitizeInput(requestBody.Text)
-```
 
 #### 3. Length Validation
 
@@ -91,8 +78,7 @@ if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 }
 // ❌ Still UNSAFE - no content validation
 
-// BAD: No sanitization before storage/display
-note.Text = requestBody.Text // ❌ XSS risk
+
 ```
 
 ## Authentication Security
@@ -217,7 +203,7 @@ type SecurityLog struct {
 ## Code Review Checklist
 
 - [ ] All user input is validated
-- [ ] Input is sanitized before storage/display
+
 - [ ] Length limits are enforced
 - [ ] Security headers are set
 - [ ] Errors are properly sanitized
@@ -234,8 +220,7 @@ type SecurityLog struct {
 # Input validation
 go get github.com/go-playground/validator/v10
 
-# HTML sanitization
-go get github.com/microcosm-cc/bluemonday
+
 
 # Security headers
 go get github.com/gorilla/handlers
