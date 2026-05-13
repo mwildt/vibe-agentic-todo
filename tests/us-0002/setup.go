@@ -20,7 +20,7 @@ func setupTest() {
 		
 		// Create testuser if it doesn't exist
 		if _, exists := userRepo.GetUser("testuser"); !exists {
-			userRepo.CreateUser("testuser", "testpass")
+			userRepo.CreateUser("testuser", "testpassword12345") // 12+ characters
 		}
 		
 		// Register auth handlers with session store and user repository

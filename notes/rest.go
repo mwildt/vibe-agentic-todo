@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"vibe-agentic/middleware"
+	"github.com/microcosm-cc/bluemonday"
 )
 
 type Note struct {
@@ -17,18 +18,40 @@ func RegisterHandlers(repo NoteRepository) {
 	// Create handlers with auth middleware
 	notesHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
+			// Validate Content-Type header
+			if r.Header.Get("Content-Type") != "application/json" {
+				http.Error(w, "Unsupported Media Type", http.StatusUnsupportedMediaType)
+				return
+			}
+
 			var requestBody struct {
 				Text string `json:"text"`
 			}
 			
-			if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+			if r.Body == nil {
+				http.Error(w, "Request body is required", http.StatusBadRequest)
 				return
 			}
 			
-			note, err := service.CreateNote(requestBody.Text)
+			if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+				middleware.SanitizeError(w, err, http.StatusBadRequest)
+				return
+			}
+
+			// Sanitize input to prevent XSS
+			p := bluemonday.UGCPolicy()
+			sanitizedText := p.Sanitize(requestBody.Text)
+			
+			// Validate text length
+			const MaxNoteTextLength = 10000
+			if len(sanitizedText) > MaxNoteTextLength {
+				http.Error(w, "Note text too long", http.StatusBadRequest)
+				return
+			}
+			
+			note, err := service.CreateNote(sanitizedText)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				middleware.SanitizeError(w, err, http.StatusInternalServerError)
 				return
 			}
 			
@@ -62,7 +85,7 @@ func RegisterHandlers(repo NoteRepository) {
 			if err.Error() == "note not found" {
 				http.Error(w, "note not found", http.StatusNotFound)
 			} else {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				middleware.SanitizeError(w, err, http.StatusInternalServerError)
 			}
 			return
 		}

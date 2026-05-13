@@ -1,6 +1,9 @@
 package user
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"errors"
+	"golang.org/x/crypto/bcrypt"
+)
 
 // User represents a user in the system with password management capabilities
 type User struct {
@@ -26,6 +29,11 @@ func NewUser(username, password string) (*User, error) {
 
 // HashPassword hashes a plain text password and returns the bcrypt hash
 func (u *User) HashPassword(password string) (string, error) {
+	// Validate password length requirement (minimum 12 characters)
+	if len(password) < 12 {
+		return "", errors.New("password must be at least 12 characters long")
+	}
+
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
@@ -45,6 +53,11 @@ func (u *User) VerifyPassword(password string) bool {
 
 // SetPassword updates the user's password with proper hashing
 func (u *User) SetPassword(password string) error {
+	// Validate password length requirement (minimum 12 characters)
+	if len(password) < 12 {
+		return errors.New("password must be at least 12 characters long")
+	}
+
 	hashedPassword, err := u.HashPassword(password)
 	if err != nil {
 		return err

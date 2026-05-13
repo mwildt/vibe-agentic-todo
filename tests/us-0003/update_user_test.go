@@ -21,19 +21,19 @@ func TestUpdateUserCLI(t *testing.T) {
 
 	// First, create a user (use a different username than the default testuser)
 	// Use the repository directly to avoid CLI file path issues
-	if err := userRepo.CreateUser("updateuser", "oldpassword"); err != nil {
+	if err := userRepo.CreateUser("updateuser", "oldpassword12345"); err != nil {
 		t.Logf("user creation failed (expected if user already exists): %v", err)
 	}
 
 	// Now update the user's password using the repository directly
-	if err := userRepo.UpdateUser("updateuser", "newpassword456"); err != nil {
+	if err := userRepo.UpdateUser("updateuser", "newpassword123456"); err != nil {
 		t.Fatalf("user update failed: %v", err)
 	}
 
 	// Update was successful (using repository directly instead of CLI)
 
 	// Verify that the user can now login with the updated password
-	loginReq, err := http.NewRequest("POST", "/login", bytes.NewReader([]byte(`{"username": "updateuser", "password": "newpassword456"}`)))
+	loginReq, err := http.NewRequest("POST", "/login", bytes.NewReader([]byte(`{"username": "updateuser", "password": "newpassword123456"}`)))
 	if err != nil {
 		t.Fatal(err)
 	}

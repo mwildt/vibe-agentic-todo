@@ -52,6 +52,7 @@ func TestCreateNote(t *testing.T) {
 		t.Fatal(err)
 	}
 	req.Header.Set("X-Session-ID", sessionID)
+	req.Header.Set("Content-Type", "application/json")
 
 	// Create a response recorder
 	rr := httptest.NewRecorder()

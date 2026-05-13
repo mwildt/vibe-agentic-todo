@@ -52,6 +52,7 @@ func TestRetrieveNote(t *testing.T) {
 		t.Fatal(err)
 	}
 	createReq.Header.Set("X-Session-ID", sessionID)
+	createReq.Header.Set("Content-Type", "application/json")
 	
 	createRR := httptest.NewRecorder()
 	http.DefaultServeMux.ServeHTTP(createRR, createReq)

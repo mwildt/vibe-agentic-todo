@@ -29,7 +29,7 @@ func TestLoginFailure(t *testing.T) {
 	rr := httptest.NewRecorder()
 	http.DefaultServeMux.ServeHTTP(rr, req)
 	
-	// Should return 401 Unauthorized
+	// Should return 401 Unauthorized for invalid credentials
 	if status := rr.Code; status != http.StatusUnauthorized {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
 	}
@@ -71,8 +71,8 @@ func TestLoginFailureEmptyCredentials(t *testing.T) {
 	rr := httptest.NewRecorder()
 	http.DefaultServeMux.ServeHTTP(rr, req)
 	
-	// Should return 401 Unauthorized
-	if status := rr.Code; status != http.StatusUnauthorized {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
+	// Should return 400 Bad Request due to validation failure
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 }

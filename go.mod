@@ -5,13 +5,24 @@ go 1.25.5
 replace vibe-agentic/cmd/cli => ./cmd/cli
 
 require (
+	github.com/go-playground/validator/v10 v10.30.2
 	github.com/google/uuid v1.6.0
+	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/spf13/cobra v1.10.2
+	golang.org/x/crypto v0.51.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
+	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/gorilla/css v1.0.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
-	golang.org/x/crypto v0.51.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 )
