@@ -39,14 +39,28 @@ func TestCreateNote(t *testing.T) {
 		t.Fatalf("Failed to parse login response: %v", err)
 	}
 
-	sessionID := loginResp.SessionID
-
-	// Verify session ID length
-	if len(sessionID) != 64 {
-		t.Errorf("Session ID has wrong length: got %d, want 64", len(sessionID))
+	// Verify login was successful
+	if loginResp.Status != "success" {
+		t.Fatalf("Login failed: status is %s, want success", loginResp.Status)
 	}
 
-	// Create a request to the notes endpoint with valid session header
+	// Extract session cookie for subsequent requests
+	cookies := loginRR.Result().Cookies()
+	if len(cookies) == 0 {
+		t.Fatal("No session cookie returned from login")
+	}
+
+	sessionCookie := cookies[0]
+	if sessionCookie.Name != "session_id" {
+		t.Fatalf("Expected session_id cookie, got %s", sessionCookie.Name)
+	}
+
+	// Verify session ID length
+	if len(sessionCookie.Value) != 64 {
+		t.Errorf("Session ID has wrong length: got %d, want 64", len(sessionCookie.Value))
+	}
+
+	// Create a request to the notes endpoint with valid session cookie
 	noteRequest := NoteRequest{Text: "Test note"}
 	reqBody, err := json.Marshal(noteRequest)
 	if err != nil {
@@ -57,7 +71,8 @@ func TestCreateNote(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req.Header.Set("X-Session-ID", sessionID)
+	// Add the session cookie to the request
+	req.AddCookie(sessionCookie)
 	req.Header.Set("Content-Type", "application/json")
 
 	// Create a response recorder

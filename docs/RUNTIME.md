@@ -14,7 +14,7 @@
 - Stores mapping of sessionID → username
 
 ### Session Validation
-1. Middleware extracts `X-Session-ID` header
+1. Middleware extracts `session_id` cookie
 2. Validates session exists in store
 3. Rejects with 401 Unauthorized if invalid/missing
 4. For valid sessions, adds username to request context
@@ -38,11 +38,11 @@ Client → GET /protected (X-Session-ID: session_id) → Server
    }
    ```
 2. Server validates credentials against user repository
-3. On success: generates session ID, stores in session store, returns 200
+3. On success: generates session ID, stores in session store, sets HTTP cookie, returns 200
 4. On failure: returns 401 Unauthorized
 
 ### Protected Requests
-1. Client includes `X-Session-ID` header with valid session ID
+1. Client includes `session_id` cookie with valid session ID
 2. Auth middleware validates session
 3. On success: adds username to context, calls handler
 4. On failure: returns 401 Unauthorized
@@ -78,6 +78,9 @@ Client → GET /protected (X-Session-ID: session_id) → Server
 - 32-byte (256-bit) random values, hex-encoded to 64 characters
 - Session timeout prevents indefinite access
 - No session fixation vulnerabilities
+- HttpOnly cookies prevent JavaScript access
+- Secure flag for HTTPS-only cookies in production
+- SameSite attributes prevent CSRF attacks
 
 ### Input Validation
 - All API inputs are validated

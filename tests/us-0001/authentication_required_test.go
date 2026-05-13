@@ -24,7 +24,7 @@ func TestAuthenticationRequired(t *testing.T) {
 		t.Fatal(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	// Intentionally NOT setting X-Session-ID header
+	// Intentionally NOT setting session cookie
 	
 	rr := httptest.NewRecorder()
 	http.DefaultServeMux.ServeHTTP(rr, req)
@@ -40,7 +40,7 @@ func TestAuthenticationRequired(t *testing.T) {
 		t.Fatal(err)
 	}
 	getReq.Header.Set("Content-Type", "application/json")
-	// Intentionally NOT setting X-Session-ID header
+	// Intentionally NOT setting session cookie
 	
 	getRR := httptest.NewRecorder()
 	http.DefaultServeMux.ServeHTTP(getRR, getReq)
@@ -66,7 +66,8 @@ func TestInvalidSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req.Header.Set("X-Session-ID", "invalid-session-id")
+	// Add invalid session cookie
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "invalid-session-id"})
 	req.Header.Set("Content-Type", "application/json")
 	
 	rr := httptest.NewRecorder()

@@ -5,10 +5,10 @@ Als Nutzer möchte ich die Möglichkeit haben, mich mit meinen Anmeldedaten (Ben
 
 ## Akzeptanzkriterien
 - Der Nutzer kann sich mit Benutzername und Passwort anmelden
-- Bei erfolgreicher Anmeldung wird eine gültige Session-ID zurückgegeben
+- Bei erfolgreicher Anmeldung wird eine gültige Session als HTTP-Cookie gesetzt
 - Bei falschen Anmeldedaten wird ein entsprechender Fehler zurückgegeben
-- Die Session-ID kann in subsequenten Requests im X-Session-ID Header verwendet werden
+- Die Session wird als HTTP-Cookie (session_id) für subsequenten Requests verwendet
 - Die Anmeldung erfolgt über einen REST-Endpunkt /login mit POST-Methode
 - Erfolgreiche Anmeldung gibt HTTP-Status 200 zurück
 - Fehlgeschlagene Anmeldung gibt HTTP-Status 401 zurück
-- Die Session-ID muss den Anforderungen der Auth-Middleware entsprechen
+- Die Session muss den Anforderungen der Auth-Middleware entsprechen

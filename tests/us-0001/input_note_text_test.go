@@ -39,11 +39,20 @@ func TestInputNoteText(t *testing.T) {
 		t.Fatalf("Failed to parse login response: %v", err)
 	}
 
-	sessionID := loginResp.SessionID
+	// Extract session cookie for subsequent requests
+	cookies := loginRR.Result().Cookies()
+	if len(cookies) == 0 {
+		t.Fatal("No session cookie returned from login")
+	}
 
-	// Verify session ID length
-	if len(sessionID) != 64 {
-		t.Errorf("Session ID has wrong length: got %d, want 64", len(sessionID))
+	sessionCookie := cookies[0]
+	if sessionCookie.Name != "session_id" {
+		t.Fatalf("Expected session_id cookie, got %s", sessionCookie.Name)
+	}
+
+	// Verify session ID length (from cookie)
+	if len(sessionCookie.Value) != 64 {
+		t.Errorf("Session ID has wrong length: got %d, want 64", len(sessionCookie.Value))
 	}
 
 	// Create a note with specific text content
@@ -58,7 +67,8 @@ func TestInputNoteText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req.Header.Set("X-Session-ID", sessionID)
+	// Add the session cookie to the request
+	req.AddCookie(sessionCookie)
 	req.Header.Set("Content-Type", "application/json")
 
 	// Create a response recorder
@@ -93,7 +103,8 @@ func TestInputNoteText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	retrieveReq.Header.Set("X-Session-ID", sessionID)
+	// Add the session cookie to the retrieve request
+	retrieveReq.AddCookie(sessionCookie)
 
 	retrieveRR := httptest.NewRecorder()
 	http.DefaultServeMux.ServeHTTP(retrieveRR, retrieveReq)

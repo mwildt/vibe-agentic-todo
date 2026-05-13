@@ -9,13 +9,19 @@ func SetSessionStore(store interface{}) {
 	// No-op due to import cycle issues
 }
 
-// AuthMiddleware is a middleware that checks for valid session ID
+// AuthMiddleware is a middleware that checks for valid session ID in cookies
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check for session ID in header
-		sessionID := r.Header.Get("X-Session-ID")
+		// Check for session ID in cookie
+		cookie, err := r.Cookie("session_id")
+		if err != nil {
+			http.Error(w, "Unauthorized: Session cookie required", http.StatusUnauthorized)
+			return
+		}
+		
+		sessionID := cookie.Value
 		if sessionID == "" {
-			http.Error(w, "Unauthorized: Session ID required", http.StatusUnauthorized)
+			http.Error(w, "Unauthorized: Invalid session cookie", http.StatusUnauthorized)
 			return
 		}
 		

@@ -22,8 +22,10 @@ type LoginRequest struct {
 	Password string `json:"password" validate:"required,min=8,max=100"`
 }
 
+// LoginResponse is no longer needed as session is managed via cookies
 type LoginResponse struct {
-	SessionID string `json:"session_id"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
 }
 
 func RegisterHandlers(store SessionStore, userRepository user.UserRepository) {
@@ -96,10 +98,21 @@ func RegisterHandlers(store SessionStore, userRepository user.UserRepository) {
 			"session_id": session.ID,
 		})
 
-		// Return session ID
+		// Set session ID as HTTP cookie instead of returning in JSON
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session_id",
+			Value:    session.ID,
+			Path:     "/",
+			HttpOnly: true,  // Prevent JavaScript access
+			Secure:   false, // Set to true in production with HTTPS
+			SameSite: http.SameSiteLaxMode,
+			MaxAge:   24 * 60 * 60, // 24 hours
+		})
+
+		// Return success response without session ID in body
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(LoginResponse{SessionID: session.ID})
+		json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Login successful"})
 	})
 }
 

@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -40,15 +39,11 @@ func TestLoginFailure(t *testing.T) {
 		t.Errorf("login failure response does not contain expected error message: got %v want %v", rr.Body.String(), expectedError)
 	}
 	
-	// Verify that no session ID is returned by trying to parse the response
-	var loginResp LoginResponse
-	if err := json.NewDecoder(rr.Body).Decode(&loginResp); err == nil {
-		// If parsing succeeds, session_id should be empty
-		if loginResp.SessionID != "" {
-			t.Errorf("login failure response should not contain session_id, but got: %s", loginResp.SessionID)
-		}
+	// Verify that no session cookie is returned
+	cookies := rr.Result().Cookies()
+	if len(cookies) > 0 {
+		t.Errorf("login failure should not return any cookies, but got %d cookies", len(cookies))
 	}
-	// If parsing fails, that's also acceptable for an error response
 }
 
 // TestLoginFailureEmptyCredentials tests that login with empty credentials returns 401

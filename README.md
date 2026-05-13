@@ -83,15 +83,18 @@ Content-Type: application/json
 
 Response:
 {
-  "session_id": "64-character-hex-encoded-32-byte-random-value"
+  "status": "success",
+  "message": "Login successful"
 }
+
+Note: Session is returned as HTTP cookie (session_id)
 ```
 
 **Authenticated Requests**
-All API endpoints require the `X-Session-ID` header:
+All API endpoints require the `session_id` cookie:
 ```
 GET /notes
-X-Session-ID: your-session-id-here
+Cookie: session_id=your-session-id-here
 ```
 
 ### TODO Endpoints
@@ -99,7 +102,7 @@ X-Session-ID: your-session-id-here
 **Create Note**
 ```
 POST /notes
-X-Session-ID: your-session-id
+Cookie: session_id=your-session-id
 Content-Type: application/json
 
 {
@@ -116,7 +119,7 @@ Response: 201 Created
 **Get Note**
 ```
 GET /notes/{id}
-X-Session-ID: your-session-id
+Cookie: session_id=your-session-id
 
 Response: 200 OK
 {

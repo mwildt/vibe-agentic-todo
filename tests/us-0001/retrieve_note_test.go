@@ -39,11 +39,25 @@ func TestRetrieveNote(t *testing.T) {
 		t.Fatalf("Failed to parse login response: %v", err)
 	}
 
-	sessionID := loginResp.SessionID
+	// Verify login was successful
+	if loginResp.Status != "success" {
+		t.Fatalf("Login failed: status is %s, want success", loginResp.Status)
+	}
+
+	// Extract session cookie for subsequent requests
+	cookies := loginRR.Result().Cookies()
+	if len(cookies) == 0 {
+		t.Fatal("No session cookie returned from login")
+	}
+
+	sessionCookie := cookies[0]
+	if sessionCookie.Name != "session_id" {
+		t.Fatalf("Expected session_id cookie, got %s", sessionCookie.Name)
+	}
 
 	// Verify session ID length
-	if len(sessionID) != 64 {
-		t.Errorf("Session ID has wrong length: got %d, want 64", len(sessionID))
+	if len(sessionCookie.Value) != 64 {
+		t.Fatalf("Session ID has wrong length: got %d, want 64", len(sessionCookie.Value))
 	}
 
 	// First, create a note to retrieve
@@ -58,7 +72,8 @@ func TestRetrieveNote(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	createReq.Header.Set("X-Session-ID", sessionID)
+	// Add the session cookie to the create request
+	createReq.AddCookie(sessionCookie)
 	createReq.Header.Set("Content-Type", "application/json")
 
 	createRR := httptest.NewRecorder()
@@ -84,7 +99,8 @@ func TestRetrieveNote(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	retrieveReq.Header.Set("X-Session-ID", sessionID)
+	// Add the session cookie to the retrieve request
+	retrieveReq.AddCookie(sessionCookie)
 
 	retrieveRR := httptest.NewRecorder()
 	http.DefaultServeMux.ServeHTTP(retrieveRR, retrieveReq)

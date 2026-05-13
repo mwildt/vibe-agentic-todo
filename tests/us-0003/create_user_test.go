@@ -41,20 +41,32 @@ func TestCreateUserCLI(t *testing.T) {
 		t.Errorf("login with created user failed: got status %v want %v", loginRR.Code, http.StatusOK)
 	}
 
-	// Verify the login response contains a session ID
+	// Verify the login response is successful
 	var loginResp struct {
-		SessionID string `json:"session_id"`
+		Status  string `json:"status"`
+		Message string `json:"message"`
 	}
 	if err := json.NewDecoder(loginRR.Body).Decode(&loginResp); err != nil {
 		t.Fatal(err)
 	}
 
-	if loginResp.SessionID == "" {
-		t.Errorf("login response does not contain session ID")
+	if loginResp.Status != "success" {
+		t.Errorf("login response status is %s, want success", loginResp.Status)
+	}
+
+	// Verify session cookie is present
+	cookies := loginRR.Result().Cookies()
+	if len(cookies) == 0 {
+		t.Fatal("No session cookie returned from login")
+	}
+
+	sessionCookie := cookies[0]
+	if sessionCookie.Name != "session_id" {
+		t.Fatalf("Expected session_id cookie, got %s", sessionCookie.Name)
 	}
 
 	// Verify session ID length (64 characters = 32 bytes in hex)
-	if len(loginResp.SessionID) != 64 {
-		t.Errorf("session ID has wrong length: got %d characters, want 64", len(loginResp.SessionID))
+	if len(sessionCookie.Value) != 64 {
+		t.Errorf("session ID has wrong length: got %d characters, want 64", len(sessionCookie.Value))
 	}
 }

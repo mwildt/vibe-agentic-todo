@@ -32,7 +32,7 @@ Each module follows a ports and adapters architecture:
 ## Authorization ⚠️ IMPORTANT
 Every API request must be authorized with a Session-ID. Authorization must meet these requirements:
 
-1. **Session-ID Required**: Every request must contain a valid Session-ID in the header
+1. **Session-ID Required**: Every request must contain a valid Session-ID in an HTTP cookie
 2. **Endpoint-specific Permissions**: Each endpoint requires specific HTTP permissions
 3. **Middleware-based**: Authorization must be implemented as middleware executed before handlers
 4. **Error Handling**: Unauthorized requests must return 401 Unauthorized
@@ -52,12 +52,17 @@ Every API request must be authorized with a Session-ID. Authorization must meet 
 - ✅ Implement session timeout (e.g., 24 hours)
 - ✅ Generate session IDs with UUID or similar
 - ✅ Validate sessions against the store
+- ✅ Use HttpOnly cookies for session management
+- ✅ Use Secure flag for cookies in production
+- ✅ Use SameSite cookie attributes for security
 
 ### Anti-Patterns:
 - ❌ Manual session management
 - ❌ Validate session IDs without store
 - ❌ Use Session-Store globally without dependency injection
 - ❌ Ignore thread safety
+- ❌ Return session IDs in JSON responses
+- ❌ Use session headers instead of cookies
 
 ### Example:
 ```go
@@ -118,6 +123,41 @@ Administrative functions are implemented as CLI commands:
 
 ## Checklist for New Endpoints
 1. [ ] Implement/integrate authorization middleware
-2. [ ] Implement session-ID validation
+2. [ ] Implement session cookie validation
 3. [ ] Check endpoint-specific permissions
 4. [ ] Handle error cases (401, 403) correctly
+
+## Session Management Refactoring (Cookie-Based)
+
+### Problem
+The original implementation returned session IDs in JSON responses and required clients to manually set `X-Session-ID` headers. This approach had several issues:
+- Less secure (session IDs exposed in responses)
+- More complex for clients to implement
+- Prone to session fixation vulnerabilities
+- Inconsistent with modern web security practices
+
+### Solution
+Refactored to use HTTP cookies for session management:
+- Session ID is set as HttpOnly cookie on login
+- Auth middleware reads session from cookies
+- More secure and user-friendly
+- Follows modern web security best practices
+
+### Changes Made
+1. **Login Endpoint**: Returns success response + sets session cookie instead of JSON session ID
+2. **Auth Middleware**: Reads session from cookies instead of headers
+3. **Tests**: Updated to work with cookie-based sessions
+4. **Documentation**: Updated to reflect cookie-based approach
+
+### Best Practices for Cookie-Based Sessions
+- ✅ Use HttpOnly flag to prevent JavaScript access
+- ✅ Use Secure flag in production (HTTPS only)
+- ✅ Use SameSite attributes to prevent CSRF
+- ✅ Set appropriate cookie path and expiration
+- ✅ Use proper cookie size limits
+
+### Anti-Patterns to Avoid
+- ❌ Returning session IDs in JSON responses
+- ❌ Using custom headers for session management
+- ❌ Not setting HttpOnly flag on session cookies
+- ❌ Using insecure cookie settings
