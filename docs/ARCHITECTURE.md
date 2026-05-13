@@ -47,6 +47,45 @@ middleware.SetSessionStore(sessionStore)
 // auth.RegisterHandlers() // Ohne Session-Store
 ```
 
+## Test Implementation Guidelines
+
+### JSON Handling in Tests
+
+✅ **DO:**
+- Use `json.NewDecoder()` to parse responses into structs
+- Use `json.Marshal()` to create request bodies
+- Define proper Go structs with JSON tags for request/response formats
+- Compare struct fields directly (e.g., `if response.Text != expectedText`)
+
+❌ **DON'T:**
+- Use `strings.Contains()` or other string operations to check JSON content
+- Manually parse JSON strings with `strings.Index()` or regex
+- Compare raw JSON strings
+
+### Example of Correct Pattern:
+
+```go
+// Define response struct
+type NoteResponse struct {
+    ID   string `json:"id"`
+    Text string `json:"text"`
+}
+
+// Parse response properly
+var note NoteResponse
+if err := json.NewDecoder(response.Body).Decode(&note); err != nil {
+    t.Fatalf("Failed to parse response: %v", err)
+}
+
+// Compare fields directly
+if note.Text != expectedText {
+    t.Errorf("Expected text %q, got %q", expectedText, note.Text)
+}
+```
+
+### Legacy Code Note:
+Some older tests may use string operations for convenience. These should be migrated to proper JSON parsing when modified.
+
 ## Domain Layer
 Die Domain-Schicht enthält die Business-Objekte und ihre Kernlogik. Jedes Domain-Objekt sollte seine eigene Business-Logik kapseln.
 
